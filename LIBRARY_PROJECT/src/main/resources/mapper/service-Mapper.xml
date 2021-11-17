@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 모든 SQL문을 mapper태그 안에 작성 -->
+<mapper namespace="serviceMapper">
+
+			<resultMap type="com.potato.project.service.vo.ReadingRecordVO" id="record">
+			<id 	column="RECORD_CODE" 		property="recordCode"	/>
+			<result column="SEAT_CODE" 			property="seatCode" 	/>
+			<result column="ID" 				property="id" 			/>
+			<result column="SEAT_IN_DATE" 		property="seatInDate"	/>
+			<result column="SEAT_OUT_DATE" 		property="seatOutDate"	/>
+			</resultMap>
+			
+			<resultMap type="com.potato.project.service.vo.ReadingSeatVO" id="seat">
+			<id 	column="SEAT_CODE" 			property="seatCode"		/>
+			<result column="SEAT_STATUS" 		property="seatStatus" 	/>
+			<result column="ID" 				property="id" 			/>
+			</resultMap>
+			
+			<resultMap type="com.potato.project.member.vo.MemberVO" id="member">
+			<id 	column="ID" 				property="id"/>
+			<result column="PW" 			property="pw"/>
+			<result column="NAME" 			property="name"/>                                           	      
+			<result column="ADDR" 			property="addr"/>                                           	  
+			<result column="TELL" 			property="tell"/>                                           	  
+			<result column="IS_ADMIN" 		property="isAdmin"/>                                        	  
+			<result column="IS_DELETE" 		property="isDelete"/>                                       	      
+			<result column="GENDER" 		property="gender"/>                                         	      
+			<result column="FAVORITE" 		property="favorite"/>                                                           
+			</resultMap>
+			
+			<resultMap type="com.potato.project.service.vo.RequestBoardVO" id="requestBoard">
+			<id 	column="REQUEST_CODE"	property="requestCode"/>
+			<result column="ID"				property="id"/>
+			<result column="TITLE"			property="title"/>                                              
+			<result column="WRITER"			property="writer"/>                                              
+			<result column="ISBN"			property="isbn"/>                                              
+			<result column="PUB_DATE"		property="pubDate"/>   
+			<result column="CATEGORY"		property="category"/>   
+			<result column="KDC_CODE"		property="kdcCode"/>   
+			<result column="KDC_NAME"		property="kdcName"/>                                                                                                                                                                  
+			<result column="CREATE_DATE"	property="createDate"/>                                                                                                                                                                  
+			<result column="REQUEST_STATUS"	property="requestStatus"/>                                                                                                                                                                  
+			</resultMap>
+			
+	 		<resultMap type="com.potato.project.service.vo.RecommendVO" id="recommend" >                                                                                                                                                                                                      
+			 <id	 column="RC_CODE"       property="rcCode"   />
+			 <result column="TITLE"         property="title"    />
+			 <result column="CONTENT_TITLE" property="contentTitle"	jdbcType="BLOB" javaType="[B" />
+			 <result column="IMG_ONE"       property="imgOne"   />
+			 <result column="CONTENT_ONE"   property="contentOne"	jdbcType="BLOB" javaType="[B" />
+			 <result column="IMG_TWO"       property="imgTwo"   />
+			 <result column="CONTENT_TWO"   property="contentTwo"	jdbcType="BLOB" javaType="[B" />
+			 <result column="IMG_THREE"     property="imgThree" /> 
+			 <result column="CONTENT_THREE" property="contentThree"	jdbcType="BLOB" javaType="[B" />
+			</resultMap>
+			
+			<delete id="recommendDelete">
+			DELETE RECOMMEND_BOARD WHERE RC_CODE = #{rcCode }
+			</delete>
+			
+			<!-- 심화 방법 필요함 -->
+			<insert id="recommendUpdate">
+			UPDATE RECOMMEND_BOARD
+			SET 
+			TITLE = #{title }       
+			,CONTENT_TITLE = RAWTOHEX(#{contentTitle })
+			,CONTENT_ONE = RAWTOHEX(#{contentOne }) 
+			,CONTENT_TWO = RAWTOHEX(#{contentTwo }) 
+			,CONTENT_THREE = RAWTOHEX(#{contentThree })
+			,IMG_ONE = #{imgOne }     
+			,IMG_TWO = #{imgTwo }     
+			,IMG_THREE = #{imgThree }  
+			FROM RECOMMEND_BOARD
+			WHERE RC_CODE = #{rcCode }
+			</insert>
+			
+			<select id="rcList" resultMap="recommend">
+			SELECT
+			RC_CODE, TITLE 
+			FROM RECOMMEND_BOARD
+			</select>
+			
+			<select id="lastRcCode" resultType="String">
+			SELECT MAX(RC_CODE) AS RC_CODE 
+			FROM RECOMMEND_BOARD
+			</select>
+			
+			<insert id="insertRecommend">
+			INSERT INTO RECOMMEND_BOARD(
+			RC_CODE      
+			,TITLE        
+			,CONTENT_TITLE
+			,IMG_ONE      
+			,CONTENT_ONE  
+			,IMG_TWO      
+			,CONTENT_TWO  
+			,IMG_THREE   
+			,CONTENT_THREE
+			)VALUES(
+			(SELECT 'RC_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(RC_CODE,4,3))),0)+1,3,'0') AS RECOMMEND_CODE FROM RECOMMEND_BOARD)
+			,#{title }
+			,RAWTOHEX(#{contentTitle })
+			,#{imgOne }
+			,RAWTOHEX(#{contentOne })
+			,#{imgTwo }
+			,RAWTOHEX(#{contentTwo }) 
+			,#{imgThree }	
+			,RAWTOHEX(#{contentThree }) 	
+			)
+			</insert>
+			
+			<select id="recommendBoard" resultMap="recommend" >
+			SELECT 
+			RC_CODE      
+			,TITLE        
+			,CONTENT_TITLE
+			,IMG_ONE      
+			,CONTENT_ONE  
+			,IMG_TWO      
+			,CONTENT_TWO  
+			,IMG_THREE   
+			,CONTENT_THREE
+			FROM RECOMMEND_BOARD
+			WHERE RC_CODE = #{rcCode }
+			</select>
+			
+			<!-- 테스트용 매퍼 -->
+			<insert id="recommendReg">
+			INSERT INTO RECOMMEND_BOARD(
+			 RC_CODE
+			 ,CONTENT
+			)VALUES(
+			(SELECT 'RC_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(RC_CODE,4,3))),0)+1,3,'0') AS RECOMMEND_CODE FROM RECOMMEND_BOARD)
+			,RAWTOHEX(#{content })
+			)
+			</insert>
+			
+			<update id="ajaxRequestStatusChange">
+			UPDATE REQUEST_BOARD
+			SET REQUEST_STATUS = #{requestStatus }
+			WHERE REQUEST_CODE = #{requestCode }
+			</update>
+		
+			<insert id="ajaxRegRequest">
+			INSERT INTO REQUEST_BOARD(
+			REQUEST_CODE, ID, TITLE, WRITER, ISBN, PUB_DATE, CATEGORY, KDC_CODE, KDC_NAME
+			)VALUES(
+			 (SELECT 'REQUEST_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(REQUEST_CODE,9,3))),0)+1,3,'0')AS REQUEST_CODE FROM REQUEST_BOARD)
+			 ,#{id }, #{title }, #{writer }, #{isbn }, #{pubDate }, #{category }, #{kdcCode }, #{kdcName }
+			)
+			</insert>
+			
+			<delete id="deleteBookRequest">
+			DELETE REQUEST_BOARD
+			WHERE REQUEST_CODE = #{requestCode }
+			</delete>
+			
+			<select id="checkISBN" resultType="String">
+			SELECT ISBN FROM REQUEST_BOARD WHERE ISBN = #{isbn }		
+			</select>
+			
+			<select id="checkRequestCnt" resultType="int">
+			SELECT COUNT(REQUEST_CODE) AS REQUEST_CNT FROM REQUEST_BOARD WHERE ID = #{id }
+			</select>
+			
+			<insert id="regBookRequest">
+			INSERT INTO REQUEST_BOARD(
+			REQUEST_CODE, ID, TITLE, WRITER, ISBN, PUB_DATE, CATEGORY, KDC_CODE, KDC_NAME
+			)VALUES(
+			 (SELECT 'REQUEST_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(REQUEST_CODE,9,3))),0)+1,3,'0')AS REQUEST_CODE FROM REQUEST_BOARD)
+			 ,#{id }, #{title }, #{writer }, #{isbn }, #{pubDate }, #{category }, #{kdcCode }, #{kdcName }
+			)
+			</insert>
+			
+			<select id="requestIdAndIsAdminCheck" resultMap="member">
+			SELECT ID, IS_ADMIN FROM MEMBER WHERE ID = #{id } AND IS_ADMIN = #{isAdmin }
+			</select>	
+			
+			<select id="requestBoardList" resultMap="requestBoard">
+					SELECT 
+                    REQUEST_CODE,ID ,TITLE ,WRITER ,ISBN ,PUB_DATE, CREATE_DATE, CATEGORY, KDC_CODE, KDC_NAME, REQUEST_STATUS
+					FROM REQUEST_BOARD
+                    WHERE  ID = (SELECT ID 
+                                 FROM MEMBER 
+                                 WHERE ID = #{id })
+					ORDER BY REQUEST_CODE DESC			
+			</select>
+			
+			<select id="requestBoardListAdmin" resultMap="requestBoard">
+					SELECT 
+                    REQUEST_CODE,ID ,TITLE ,WRITER ,ISBN ,PUB_DATE, CREATE_DATE, CATEGORY, KDC_CODE, KDC_NAME, REQUEST_STATUS
+					FROM REQUEST_BOARD
+					ORDER BY REQUEST_CODE DESC			
+			</select>
+			
+			<select id="requestBoardListAdminChooseYearMonth" resultMap="requestBoard">
+					SELECT 
+                    REQUEST_CODE,ID ,TITLE ,WRITER ,ISBN ,PUB_DATE, CREATE_DATE, CATEGORY, KDC_CODE, KDC_NAME, REQUEST_STATUS
+					FROM REQUEST_BOARD
+					WHERE
+					CREATE_DATE &gt;= TO_DATE(#{selectYearMonth },'YYYY-MM')
+					AND
+					CREATE_DATE &lt;= TO_DATE(TO_CHAR(LAST_DAY(#{selectYearMonth }||'01'),'YYYY-MM-DD'),'YYYY-MM-DD')
+					ORDER BY REQUEST_CODE DESC			
+			</select>
+
+			<select id="selectReadingSeat" resultMap="seat">
+			SELECT SEAT_CODE
+					,SEAT_STATUS
+					,ID
+					FROM READING_SEAT
+			</select>
+			<select id="chooseSeat" resultMap="seat">
+			SELECT SEAT_CODE
+					,SEAT_STATUS
+					,ID
+					FROM READING_SEAT
+					WHERE SEAT_CODE = #{seatCode }
+			</select>
+			<update id="seatUpdate">
+			UPDATE READING_SEAT
+			SET 
+			<if test="seatStatus != 0">
+			ID = #{id},
+			</if>
+			<if test="seatStatus == 0">
+			ID = null,
+			</if>
+			SEAT_STATUS = #{seatStatus }
+			WHERE SEAT_CODE = #{seatCode }
+			</update>
+			<select id="seatIdCheck" resultType="String">
+			SELECT ID
+				FROM READING_SEAT
+				WHERE ID = #{id }			
+			</select>
+			<select id="seatMemberIdCheck" resultType="String">
+			SELECT ID
+				FROM MEMBER
+				WHERE ID = #{id }
+			</select> 
+			<insert id="seatInRecord">                                             
+			INSERT INTO READING_RECORD(
+			RECORD_CODE     
+ 			, SEAT_CODE        
+ 			, ID                  	                                                        
+			)VALUES(                                                
+			(SELECT 'RECORD_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(RECORD_CODE,8,3))),0)+1,3,'0')AS RECORD_CODE FROM READING_RECORD)
+			, #{seatCode }                                                        
+			, #{id }
+			)			                                            
+			</insert>                                                              
+			<update id="seatOutRecord">
+			UPDATE READING_RECORD
+			SET SEAT_OUT_DATE = SYSDATE
+			WHERE RECORD_CODE = 
+			(SELECT 'RECORD_'||LPAD(NVL(MAX(TO_NUMBER(SUBSTR(RECORD_CODE,8,3))),0),3,'0') AS RECORD_CODE 
+			FROM READING_RECORD WHERE ID = #{id })
+			</update>
+			<select id="seatRecordList" resultMap="record">
+			SELECT 
+			RECORD_CODE
+			, SEAT_CODE
+			, ID
+			, SEAT_IN_DATE
+			, SEAT_OUT_DATE 
+			FROM READING_RECORD
+			ORDER BY SEAT_OUT_DATE DESC
+            ,SEAT_IN_DATE DESC
+			</select>
+			
+			<select id="endDateForSearchRecord" resultType="String">
+			SELECT TO_DATE(#{recordEndDate }) + 1 AS RECORD_END_DATE
+			FROM READING_RECORD GROUP BY SYSDATE
+			</select>
+			
+			<select id="searchRecord" resultMap="record">
+			SELECT 
+			RECORD_CODE
+			, SEAT_CODE
+			, ID
+			, SEAT_IN_DATE
+			, SEAT_OUT_DATE 
+			FROM READING_RECORD
+			<if test="id != null or !id.equals('') or !recordEndDate.equals('')">
+			WHERE
+			</if>
+			<if test="id != null and !id.equals('')">
+			ID = #{id }			
+			</if>
+			<if test="id != null and !id.equals('') and !recordEndDate.equals('')">
+			AND
+			</if>
+			<if test="recordStartDate != null and !recordStartDate.equals('') and !recordEndDate.equals('')">
+			SEAT_IN_DATE &gt;= TO_DATE(#{recordStartDate },'YYYY-MM-DD HH24:mi:ss')
+			AND SEAT_IN_DATE &lt;= TO_DATE(#{recordEndDate },'YYYY-MM-DD HH24:mi:ss')
+			</if>
+			ORDER BY SEAT_OUT_DATE DESC
+			</select>	
+			
+				
+</mapper>
+
+
+
+
+
+
+
+
+

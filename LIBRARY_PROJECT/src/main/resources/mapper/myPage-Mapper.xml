@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 모든 SQL문을 mapper태그 안에 작성 -->
+<mapper namespace="myPageMapper">
+	
+	<!-- resultmap 작성 카운트용 추가 1025봉 -->
+	<resultMap type="com.potato.project.member.vo.MemberVO" id="memberVO">
+		<id column="ID" 				property="id"/>
+		<result column="PW" 			property="pw"/>
+		<result column="NAME" 			property="name"/>
+		<result column="ADDR" 			property="addr"/>
+		<result column="TELL" 			property="tell"/>
+		<result column="BIRTH" 			property="birth"/>
+		<result column="IS_ADMIN" 		property="isAdmin"/>
+		<result column="IS_DELETE" 		property="isDelete"/>
+		<result column="GENDER" 		property="gender"/>
+		<result column="FAVORITE" 		property="favorite"/>
+		<result column="RENTAL_CNT" 	property="rentalCnt"/>
+		<result column="RESERVE_CNT" 	property="reserveCnt"/>
+		<result column="RETURN_CNT" 	property="returnCnt"/>
+		<result column="TELL_CNT" 		property="tellCnt"/>
+		<result column="TELL1" 			property="tell1"/>
+		<result column="TELL2" 			property="tell2"/>
+		<result column="TELL3" 			property="tell3"/>
+		<result column="POST_CODE" 		property="postCode"/>
+	</resultMap>
+	
+	<!-- 대출resultmap 추가 2025-봉 -->
+	<resultMap type="com.potato.project.common.vo.RentalVO" id="rental">
+		<id column="RENTAL_CODE" 		property="rentalCode"/>
+		<result column="ID" 			property="id"/>
+		<result column="BOOK_CODE" 		property="bookCode"/>
+		<result column="RENTAL_DATE" 	property="rentalDate"/>
+		<result column="LIMIT_DATE" 	property="limitDate"/>	
+		<result column="RETURN_DATE" 	property="returnDate"/>	
+		<association property="bookVO"  resultMap="book"/>
+	</resultMap>
+	
+	<!-- 예약resultmap 추가 2025-봉 -->
+	<resultMap type="com.potato.project.common.vo.ReserveVO" id="reserve">
+		<id column="RESERVE_CODE" 				property="reserveCode"/>
+		<result column="ID" 					property="id"/>
+		<result column="BOOK_CODE" 				property="bookCode"/>
+		<result column="RENTABLE_START_DATE" 	property="rentableStartDate"/>
+		<result column="RENTABLE_END_DATE" 		property="rentableEndDate"/>
+		<association property="bookVO"  		resultMap="book"/>	
+	</resultMap>
+	
+	<!-- 문의상담 스틸 2029-봉-->
+	<resultMap type="com.potato.project.content.vo.QnaVO" id="qna">
+		<id column="QNA_CODE" 			property="qnaCode"/>
+		<result column="TITLE" 			property="title"/>
+		<result column="ID" 	 	 	property="id"/>
+		<result column="NAME" 		 	property="name"/>
+		<result column="CONTENT" 	 	property="content"/>
+		<result column="CREATE_DATE" 	property="createDate"/>
+		<result column="QNA_PW" 	 	property="qnaPw"/>
+		<result column="ANSWER_CNT" 	property="answerCnt"/>
+	</resultMap>
+	
+	<!-- 북 스틸 2029-봉 -->
+	<resultMap type="com.potato.project.common.vo.BookVO" id="book">
+		<id column="BOOK_CODE" 				property="bookCode"/>
+		<result column="ISBN" 				property="isbn"/>
+		<result column="KDC" 				property="kdc"/>
+		<result column="KDC_NUM" 			property="kdcNum"/>
+		<result column="KDC_NAME" 			property="kdcName"/>
+		<result column="WRITER" 			property="writer"/>
+		<result column="TRANSLATOR" 		property="translator"/>
+		<result column="TITLE" 				property="title"/>
+		<result column="PAGE" 				property="page"/>
+		<result column="BOOK_SIZE" 			property="bookSize"/>
+		<result column="KEYWORD" 			property="keyword"/>
+		<result column="PUBLISHER" 			property="publisher"/>
+		<result column="PUB_DATE" 			property="pubDate"/>
+		<result column="SUMMARY" 			property="summary"/>
+		<result column="INTRO" 				property="intro"/>
+		<result column="INPUT_DATE" 		property="inputDate"/>
+		<result column="AREA" 				property="area"/>
+		<result column="STATUS" 			property="status"/>
+		<result column="IS_DELETE" 			property="isDelete"/>
+		<result column="RENTAL_ID" 			property="rentalId"/>
+		<result column="RESERVE_ID" 		property="reserveId"/>
+		<association property="bookImgVO" 	resultMap="bookImg"/>
+	</resultMap>
+	
+	<!-- 북이미지 스틸 2029-봉 -->
+	<resultMap type="com.potato.project.common.vo.BookImgVO" id="bookImg">
+		<id column="IMG_CODE" 				property="imgCode"/>
+		<result column="ORIGIN_IMG_NAME" 	property="originImgName"/>
+		<result column="ATTACHED_IMG_NAME" 	property="attachedImgName"/>
+		<result column="BOOK_CODE" 			property="bookCode"/>	
+	</resultMap>
+	
+		
+	<!-- 나의 도서관 대출 예약 반납 카운트용 추가 //1025 봉 -->
+	<select id="memberBookSituation" resultMap="memberVO">
+		SELECT (SELECT COUNT(RENTAL_CODE) FROM RENTAL
+			WHERE RETURN_DATE IS NULL
+            AND ID = #{id }
+            ) AS RENTAL_CNT
+			,(SELECT COUNT(RESERVE_CODE) FROM RESERVE
+            WHERE ID = #{id }
+            ) AS RESERVE_CNT
+			,(SELECT COUNT(RENTAL_CODE) 
+			FROM RENTAL
+			WHERE RETURN_DATE IS NOT NULL
+            AND ID = #{id }
+            ) AS RETURN_CNT
+		FROM MEMBER
+		WHERE ID = #{id }
+	</select>
+	
+	<!-- 내정보 -->
+	<!-- 전화번호 길이 구하기 -->
+	<select id="selectTellCnt" resultMap="memberVO">
+		SELECT ID 
+			, LENGTH(TELL) AS TELL_CNT
+		FROM MEMBER
+		WHERE ID = #{id}
+	</select>
+	
+	<!-- 회원 정보 조회//1025 봉 -->
+	<select id="selectMemberInfo" resultMap="memberVO">
+		SELECT ID
+			, PW
+			, NAME
+			, ADDR
+			, TELL
+			, SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),0,4)||'년'
+  			||SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),6,2)||'월'
+    		||SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),9,2)||'일' AS BIRTH
+			, GENDER
+			, FAVORITE
+		FROM MEMBER
+		WHERE ID = #{id}
+	</select>
+	
+	<!-- 전화번호&주소 빼옴 -->
+	<select id="selectMemberInfo2" resultMap="memberVO">
+		SELECT ID
+			, PW
+			, NAME
+			, TELL
+			, SUBSTR(ADDR,0,5) AS POST_CODE
+			, SUBSTR(ADDR,7) AS ADDR
+			, SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),0,4)||'년'
+  			||SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),6,2)||'월'
+    		||SUBSTR(TO_CHAR(BIRTH, 'YYYY-MM-DD'),9,2)||'일' AS BIRTH
+    		, GENDER
+			, FAVORITE
+		FROM MEMBER
+		WHERE ID = #{id}
+	</select>
+	
+	<!-- 회원정보수정 -->
+	<update id="updateMyInfo">
+		UPDATE MEMBER
+		SET ADDR = #{addr}
+    		, TELL = #{tell}
+    		, GENDER = #{gender}
+    		, FAVORITE = #{favorite}
+		WHERE ID = #{id}
+	</update>
+	
+	<!-- 회원 비밀번호 수정 -->
+	<update id="updatePw">
+		UPDATE MEMBER
+		SET PW = #{pw}
+		WHERE ID = #{id}
+	</update>
+	
+	<!-- 회원탈퇴시 빌린책 있는지 여부 확인 -->
+	<select id="checkRENTALBook" resultType="int">
+		SELECT COUNT(RENTAL_CODE) AS RENTAL_CNT
+		FROM RENTAL
+		WHERE RETURN_DATE IS NULL
+		AND ID = #{id}
+	</select>
+	
+	<!-- 회원 탈퇴 -->
+	<update id="checkMemberquit">
+		UPDATE MEMBER
+		SET IS_DELETE = 'Y'
+		WHERE ID = #{id}
+	</update>
+	<!-- 내정보끝  -->
+	
+	
+	<!-- 내 문의 상담 내역 -->
+	<!-- 내 문의상담 리스트 조회 -->
+	<select id="selectMyQnaList" resultMap="qna">
+		SELECT ROW_NUM 
+		     , QNA_CODE 
+		     , TITLE
+		     , ID
+		     , NAME
+		     , CREATE_DATE
+		     , QNA_PW
+		     , ANSWER_CNT
+		FROM (SELECT ROWNUM AS ROW_NUM 
+		         , QNA_CODE 
+		         , TITLE
+		         , ID
+		         , NAME
+		         , CREATE_DATE
+		         , QNA_PW
+		         , ANSWER_CNT
+			 FROM (SELECT ROWNUM AS ROW_NUM 
+		                 , QNA_CODE 
+		                 , TITLE
+		                 , ID
+		                 , NAME
+		                 , SUBSTR(TO_CHAR(CREATE_DATE, 'YYYY-MM-DD'),0,4)||'년'
+						 ||SUBSTR(TO_CHAR(CREATE_DATE, 'YYYY-MM-DD'),6,2)||'월'
+						 ||SUBSTR(TO_CHAR(CREATE_DATE, 'YYYY-MM-DD'),9,2)||'일' AS CREATE_DATE
+						 , QNA_PW
+		                 , ANSWER_CNT
+		           FROM QNA
+		           WHERE ID = #{id}
+		           ORDER BY QNA_CODE DESC
+				   )    
+				)
+				WHERE ROW_NUM &gt;= #{startNum} AND ROW_NUM &lt;= #{endNum}
+	</select>
+
+	<!-- 상담문의 총 개수 -->
+	<!-- 페이징위해 -->
+	<select id="myQnaCnt" resultType="int">
+		SELECT COUNT(QNA_CODE)
+		FROM QNA
+		WHERE ID = #{id}
+	</select>
+	
+	<!-- 문의 상담내역 끝 -->
+	
+	
+	<!-- 내 대출/예약 현황 -->
+	<!-- 대출중인거 조회 -->
+	<select id="selectRentalingList" resultMap="rental">
+		SELECT RENTAL_CODE 
+		    ,R.ID
+		    ,R.BOOK_CODE
+		    ,TITLE
+		    ,RENTAL_DATE
+		    ,LIMIT_DATE
+		FROM RENTAL R, MEMBER M, BOOK B
+		WHERE R.ID = M.ID
+		AND R.BOOK_CODE = B.BOOK_CODE
+		AND RETURN_DATE = NULL
+		AND M.ID = #{id}
+	</select>
+	
+	<!-- 내 대출내역 조회 -->
+	<select id="selectRentalList" resultMap="rental">
+		SELECT ROW_NUM 
+		    ,RENTAL_CODE 
+		    ,ID
+		    ,BOOK_CODE
+		    ,TITLE
+		    ,STATUS
+		    ,IS_DELETE
+		    , RENTAL_DATE
+		    , LIMIT_DATE
+		    , RETURN_DATE
+		FROM (SELECT ROWNUM AS ROW_NUM 
+		        ,RENTAL_CODE 
+		        ,ID
+		        ,BOOK_CODE
+		        ,TITLE
+		        ,STATUS
+		        ,IS_DELETE
+		        , RENTAL_DATE
+		        , LIMIT_DATE
+		        , RETURN_DATE
+		     FROM (SELECT ROWNUM AS ROW_NUM
+					,RENTAL_CODE 
+					,R.ID
+					,R.BOOK_CODE
+					,TITLE
+					,STATUS
+					,B.IS_DELETE
+					, SUBSTR(TO_CHAR(RENTAL_DATE, 'YYYY-MM-DD'),0,4)||'년'
+					||SUBSTR(TO_CHAR(RENTAL_DATE, 'YYYY-MM-DD'),6,2)||'월'
+					||SUBSTR(TO_CHAR(RENTAL_DATE, 'YYYY-MM-DD'),9,2)||'일' AS RENTAL_DATE
+					, SUBSTR(TO_CHAR(LIMIT_DATE, 'YYYY-MM-DD'),0,4)||'년'
+					||SUBSTR(TO_CHAR(LIMIT_DATE, 'YYYY-MM-DD'),6,2)||'월'
+					||SUBSTR(TO_CHAR(LIMIT_DATE, 'YYYY-MM-DD'),9,2)||'일' AS LIMIT_DATE
+					, SUBSTR(TO_CHAR(RETURN_DATE, 'YYYY-MM-DD'),0,4)||'년'
+					||SUBSTR(TO_CHAR(RETURN_DATE, 'YYYY-MM-DD'),6,2)||'월'
+					||SUBSTR(TO_CHAR(RETURN_DATE, 'YYYY-MM-DD'),9,2)||'일' AS RETURN_DATE
+		          FROM RENTAL R, MEMBER M, BOOK B
+		          WHERE R.ID = M.ID
+		          AND R.BOOK_CODE = B.BOOK_CODE
+		          AND M.ID = #{id}
+		          ORDER BY RETURN_DATE DESC, STATUS DESC, RENTAL_DATE DESC
+		          )
+		    )
+		WHERE ROW_NUM &gt;= #{startNum} AND ROW_NUM &lt;= #{endNum}
+	</select>
+	
+	<!-- 대출내역 카운트 -->
+	<!-- 페이징 위해 -->
+	<select id="myRentalCnt" resultType="int">
+		SELECT COUNT(RENTAL_CODE)
+		FROM RENTAL
+		WHERE ID = #{id}
+	</select>
+	
+	<!-- 예약 현황 -->
+	<select id="selectReserveList" resultMap="reserve">
+		SELECT RESERVE_CODE
+		    , R.BOOK_CODE
+		    , TITLE
+		    , STATUS
+		    , SUBSTR(TO_CHAR(RENTABLE_START_DATE, 'YYYY-MM-DD'),0,4)||'년'
+  			||SUBSTR(TO_CHAR(RENTABLE_START_DATE, 'YYYY-MM-DD'),6,2)||'월'
+    		||SUBSTR(TO_CHAR(RENTABLE_START_DATE, 'YYYY-MM-DD'),9,2)||'일' AS RENTABLE_START_DATE
+		    , SUBSTR(TO_CHAR(RENTABLE_END_DATE, 'YYYY-MM-DD'),0,4)||'년'
+  			||SUBSTR(TO_CHAR(RENTABLE_END_DATE, 'YYYY-MM-DD'),6,2)||'월'
+    		||SUBSTR(TO_CHAR(RENTABLE_END_DATE, 'YYYY-MM-DD'),9,2)||'일' AS RENTABLE_END_DATE
+		FROM RESERVE R, BOOK B
+		WHERE R.BOOK_CODE = B.BOOK_CODE
+		AND R.ID = #{id}
+	</select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
